@@ -167,6 +167,7 @@ int PathNode::CalculateF(const iPoint& destination)
 // ----------------------------------------------------------------------------------
 int j1PathFinding::CreatePath(const iPoint& origin, const iPoint& destination)
 {
+	last_path.Clear();
 	// TODO 1: if origin or destination are not walkable, return -1
 	if (!IsWalkable(origin) || !IsWalkable(destination))
 		return -1;
@@ -175,51 +176,50 @@ int j1PathFinding::CreatePath(const iPoint& origin, const iPoint& destination)
 	// Iterate while we have tile in the open list
 	PathList open;
 	PathList close;
-
+	p2List_item<PathNode>* current = nullptr;
 	open.list.add({ 0, 0, origin, nullptr });
 	
-	while (open.list.count() != 0)
+	while (open.list.count() > 0)
 	{
+		current = open.GetNodeLowestScore();
 		// TODO 3: Move the lowest score cell from open list to the closed list
-		p2List_item<PathNode>* it = open.GetNodeLowestScore();
-		
-		close.list.add(it->data);
-		open.list.del(it);
+		close.list.add(current->data);
+		open.list.del(current);
 		// TODO 4: If we just added the destination, we are done!
 		// Backtrack to create the final path
 		// Use the Pathnode::parent and Flip() the path when you are finish
-		if (it->data.pos == destination)
+		if (current->data.pos == destination)
 		{
+			while (current->data.pos != origin)
+			{
+				last_path.PushBack(current->data.pos);
+				current = close.Find(current->data.parent->pos);
+			}
+			last_path.PushBack(origin);
+			last_path.Flip();
 			break;
 		}
 		// TODO 5: Fill a list of all adjancent nodes
-		PathList adjacent;
-		it->data.FindWalkableAdjacents(adjacent);
+		PathList adjacents;
+		current->data.FindWalkableAdjacents(adjacents);
 		// TODO 6: Iterate adjancent nodes:
 		// ignore nodes in the closed list
 		// If it is NOT found, calculate its F and add it to the open list
 		// If it is already in the open list, check if it is a better path (compare G)
 		// If it is a better path, Update the parent
-		for (int i = 0; i <= adjacent.list.count() - 1; i++)
+		for (int i = 0; i < adjacents.list.count(); i++)
 		{
-			if (close.Find(adjacent.list[i].pos) == NULL)
+			if (close.Find(adjacents.list[i].pos) == NULL)
 			{
-				if (open.Find(adjacent.list[i].pos) == NULL)
+				if (open.Find(adjacents.list[i].pos) == NULL)
 				{
-					adjacent.list[i].CalculateF(destination);
-					open.list.add(adjacent.list[i]);
-				}
-				else
-				{
-					if (open.Find(adjacent.list[i].pos)->data.g > adjacent.list[i].g)
-					{
-						open.list[i] = adjacent.list[i];
-					}
+					adjacents.list[i].CalculateF(destination);
+					open.list.add(adjacents.list[i]);
+
 				}
 			}
 
 		}
-		adjacent.list.~p2List();
 	}
 	return 0;
 }
