@@ -167,7 +167,7 @@ int PathNode::CalculateF(const iPoint& destination)
 // ----------------------------------------------------------------------------------
 int j1PathFinding::CreatePath(const iPoint& origin, const iPoint& destination)
 {
-	last_path.Clear();
+	
 	// TODO 1: if origin or destination are not walkable, return -1
 	if (!IsWalkable(origin) || !IsWalkable(destination))
 		return -1;
@@ -179,23 +179,25 @@ int j1PathFinding::CreatePath(const iPoint& origin, const iPoint& destination)
 	p2List_item<PathNode>* current = nullptr;
 	open.list.add({ 0, 0, origin, nullptr });
 	
-	while (open.list.count() > 0)
+	while (open.list.count() != 0)
 	{
 		current = open.GetNodeLowestScore();
 		// TODO 3: Move the lowest score cell from open list to the closed list
 		close.list.add(current->data);
-		open.list.del(current);
+		open.list.del(open.GetNodeLowestScore());
 		// TODO 4: If we just added the destination, we are done!
 		// Backtrack to create the final path
 		// Use the Pathnode::parent and Flip() the path when you are finish
-		if (current->data.pos == destination)
+		if (close.list.end->data.pos == destination)
 		{
-			while (current->data.pos != origin)
+			last_path.Clear();
+			PathNode iterator = current->data;
+			while (iterator.parent != nullptr)
 			{
-				last_path.PushBack(current->data.pos);
-				current = close.Find(current->data.parent->pos);
+				last_path.PushBack(iterator.pos);
+				iterator = *iterator.parent;
 			}
-			last_path.PushBack(origin);
+			
 			last_path.Flip();
 			break;
 		}
@@ -207,15 +209,22 @@ int j1PathFinding::CreatePath(const iPoint& origin, const iPoint& destination)
 		// If it is NOT found, calculate its F and add it to the open list
 		// If it is already in the open list, check if it is a better path (compare G)
 		// If it is a better path, Update the parent
-		for (int i = 0; i < adjacents.list.count(); i++)
+		for (p2List_item<PathNode>* nodeIterator = adjacents.list.start; nodeIterator != nullptr; nodeIterator = nodeIterator->next)
 		{
-			if (close.Find(adjacents.list[i].pos) == NULL)
+			if (close.Find(nodeIterator->data.pos) == NULL)
 			{
-				if (open.Find(adjacents.list[i].pos) == NULL)
+				nodeIterator->data.CalculateF(destination);
+				if (p2List_item<PathNode>* equalNode = open.Find(nodeIterator->data.pos))
 				{
-					adjacents.list[i].CalculateF(destination);
-					open.list.add(adjacents.list[i]);
+					if (equalNode->data.g > nodeIterator->data.g)
+					{
+						equalNode->data.parent = nodeIterator->data.parent;
+					}
 
+				}
+				else
+				{
+					open.list.add(nodeIterator->data);
 				}
 			}
 
