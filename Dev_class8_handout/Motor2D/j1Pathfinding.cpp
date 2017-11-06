@@ -203,7 +203,7 @@ int j1PathFinding::CreatePath(const iPoint& origin, const iPoint& destination)
 		}
 		// TODO 5: Fill a list of all adjancent nodes
 		PathList adjacents;
-		current->data.FindWalkableAdjacents(adjacents);
+		close.list.end->data.FindWalkableAdjacents(adjacents);
 		// TODO 6: Iterate adjancent nodes:
 		// ignore nodes in the closed list
 		// If it is NOT found, calculate its F and add it to the open list
