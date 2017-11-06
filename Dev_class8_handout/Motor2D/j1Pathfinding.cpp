@@ -197,7 +197,7 @@ int j1PathFinding::CreatePath(const iPoint& origin, const iPoint& destination)
 				last_path.PushBack(iterator.pos);
 				iterator = *iterator.parent;
 			}
-			
+			last_path.PushBack(origin);
 			last_path.Flip();
 			break;
 		}
